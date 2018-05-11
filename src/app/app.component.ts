@@ -2,6 +2,8 @@ import { Component,OnInit, transition } from '@angular/core';
 import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
 import { AutomataState } from '../models/automata-state.model';
 
+import 'rxjs/add/operator/debounceTime';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -18,7 +20,7 @@ export class AppComponent implements OnInit{
     {
       title:'Exemplo 2 AFN',
       name:'exemplo2',
-      content:'Transições do exemplo 2 aqui'
+      content:`AB: a b\ni: 0\nf: 0 1\n0 a 1 2\n0 b \n1 a 1 2\n1 b \n2 a \n2 b 1 3\n3 a 1 2\n3 b`
     },
     {
       title:'Exemplo 3 AFN',
@@ -95,9 +97,10 @@ export class AppComponent implements OnInit{
         if (filter[0].goTo != null){
           return filter[0].goTo.join();
         }
+        return null;
       }
     }
-    return null;
+    return null; // if not found
   }
   // AFD PROPERTIES
   
@@ -107,16 +110,22 @@ export class AppComponent implements OnInit{
   private afdFirstState (state:AutomataState):AutomataState{
     // used for deep cloning objects and making them separate from original source
     let _state = JSON.parse(JSON.stringify(state));
+    _state.name = Array.isArray(_state.name) ? _state.join() : _state.name;
     for (let transition in _state.transitions.slice(0)){
-      _state.transitions[transition].goTo = (_state.transitions[transition].goTo.join()) || '';
+      _state.transitions[transition].goTo = Array.isArray(_state.transitions[transition].goTo)  
+        ? _state.transitions[transition].goTo.join() 
+        : null;
     }
     return _state;
   }
   private buildInitialDeltaList(afdState:AutomataState,deltaList:Array<string>){
-    let copyAfdState = Object.assign({},afdState)
+    let copyAfdState = JSON.parse(JSON.stringify(afdState));
+    deltaList.push(copyAfdState.name);
     for (let transition of copyAfdState.transitions){
-      if (!this.isStateInDeltaList(deltaList,transition.goTo.join())){
-        deltaList.push(transition.goTo.join());
+      if (Array.isArray(transition.goTo)){
+        if (!this.isStateInDeltaList(deltaList,transition.goTo.join()) && transition.goTo.join() != ""){
+          deltaList.push(transition.goTo.join());
+        }
       }
     }
   }
@@ -140,15 +149,21 @@ export class AppComponent implements OnInit{
         let goTo      = [];
         for (let state of deltaList[i].split(",")){
           let afnGoTo = this.getStateGoTo(afnStates,state,item)
-          if(afnGoTo != null){ goTo.push(afnGoTo) };
+          // console.log("afnGoTo: ",afnGoTo);
+          if(afnGoTo != null){ 
+            // we can't add duplicate states
+            let filter = goTo.filter((v)=>{return v == afnGoTo});
+            if (filter.length == 0){goTo.push(afnGoTo)};
+          };
           // console.log("getStateGoTo: ",this.getStateGoTo(afnStates,state,item));
         }
         // console.log("GoTo.join(): ",goTo.join());
-        if(!this.isStateInDeltaList(deltaList,goTo.join())){ 
+        if(!this.isStateInDeltaList(deltaList,goTo.join()) && goTo.join() != ""){ 
           deltaList.push(goTo.join()) 
         }
-
-        newState.transitions.push({consume:item,goTo:goTo.join()});
+        // if goTo.join() is "" we should push 'null' instead
+        const checkGoTo = goTo.join() == "" ? null : goTo.join();
+        newState.transitions.push({consume:item,goTo:checkGoTo});
         // console.log("NewState: ",newState);
       }
       afdStates.push(newState);
@@ -164,16 +179,19 @@ export class AppComponent implements OnInit{
     this.afnForm = this.fb.group({afn:''});
   }  
   ngOnInit(){
-    this.afnLines = this.afnStructure(this.exemplos[0].content,'\n');
+    
+    
+    this.afnForm.controls.afn.valueChanges
+    .debounceTime(500)
+    .subscribe((value)=>{
+      this.afnLines = this.afnStructure(value,'\n');
     this.afnStates = this.getStates(this.afnLines);
     console.log("Alphabet: ",this.getAlphabet(this.afnLines));
     console.log("AFN Initial: ",this.getInitialStates(this.afnLines));
     console.log("AFN Final: ",this.getFinalStates(this.afnLines));
     console.log("AFN States: ",this.afnStates);
     console.log("AFD States: ",this.createAFDTransitions(this.afnStates,this.getAlphabet(this.afnLines)));
-    // this.afdForm.controls.afd.valueChanges().subscribe((value)=>{
-    //   console.log("value changed in afd textarea!")
-    // })
+    })
   }
   useThis(content:string){
     // make afn receive content
