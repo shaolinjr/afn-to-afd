@@ -25,7 +25,7 @@ export class AppComponent implements OnInit{
     {
       title:'Exemplo 3 AFN',
       name:'exemplo3',
-      content:'Transições do exemplo 3 aqui'
+      content:`AB: 0 1\ni: A B\nf: D\nA 0 D C\nA 1 \nB 0 \nB 1 D\nC 0 \nC 1 B A\nD 0 B\nD 1`
     }
   ]
 
@@ -42,22 +42,22 @@ export class AppComponent implements OnInit{
     });
     return lines;
   }
-  private getAlphabet(afnLines:Array<string>){
+  private getAFNAlphabet(afnLines:Array<string>){
     let split = afnLines[0].split(" ");
     split = split.slice(1,);
     return split;
   }
-  private getInitialStates(afnLines:Array<string>){
+  private getAFNInitialStates(afnLines:Array<string>){
     let split = afnLines[1].split(" ");
     split = split.slice(1,);
     return split;
   }
-  private getFinalStates(afnLines:Array<string>){
+  private getAFNFinalStates(afnLines:Array<string>){
     let split = afnLines[2].split(" ");
     split = split.slice(1,);
     return split;
   }
-  private getStates(afnLines:Array<string>){
+  private getAFNStates(afnLines:Array<string>){
     let states:Array<AutomataState> = [];
     for (let i = 3;i < afnLines.length;i++){
       let stateName,consume,goTo;
@@ -69,16 +69,16 @@ export class AppComponent implements OnInit{
       // check if state already exists
       let state = states.filter((state)=>{return state.name == stateName});
       // console.log("State exist? Prove: ",state);
-      state.length == 0 ? states.push({name:stateName,transitions:[{consume:consume,goTo:goTo}]})
+      state.length == 0 ? states.push({name:stateName,transitions:[{consume:consume,goTo:goTo != null? goTo.sort():null}]})
                         : states.forEach((state)=>{
                           if (state.name == stateName){
-                            state.transitions.push({consume:consume,goTo:goTo});
+                            state.transitions.push({consume:consume,goTo:goTo != null? goTo.sort():null});
                           }
                         })
     }
     return states;
   }
-  private getState(afnStates:Array<AutomataState>,stateName:string){
+  private getAFNState(afnStates:Array<AutomataState>,stateName:string){
     for (let state of afnStates){
       if (state.name == stateName){
         return state;
@@ -103,17 +103,41 @@ export class AppComponent implements OnInit{
     return null; // if not found
   }
   // AFD PROPERTIES
-  
+  private getAFDFinalState(afdStates:Array<AutomataState>,afnFinalStates){
+    //loop through afdStates, split in ',', loop through 
+    let isFinal = false;
+    let finalStates = [];
+    for (let afdState of afdStates){
+      for (let state of afdState.name.split(",")){
+        //loop through afnInitialStates
+        for (let afnState of afnFinalStates){
+          if (state == afnState){
+            isFinal = true;
+          }
+        }
+      }
+      if (isFinal){
+        finalStates.push(afdState.name);
+        isFinal = false;
+      }
+    }
+    return finalStates;
+  }
+
+  private getAFDInitialState(afnInitialState){
+    return afnInitialState.sort().join();
+  }
   private isStateInDeltaList(deltaList:Array<string>,state:string){
     return deltaList.indexOf(state) != -1 ? true:false;
   }
-  private afdFirstState (state:AutomataState):AutomataState{
+  private afdFirstState (state:AutomataState,afdInitialState:string):AutomataState{
     // used for deep cloning objects and making them separate from original source
     let _state = JSON.parse(JSON.stringify(state));
-    _state.name = Array.isArray(_state.name) ? _state.join() : _state.name;
-    for (let transition in _state.transitions.slice(0)){
+    // _state.name = Array.isArray(_state.name) ? _state.join() : _state.name;
+    _state.name = afdInitialState;
+    for (let transition in _state.transitions){
       _state.transitions[transition].goTo = Array.isArray(_state.transitions[transition].goTo)  
-        ? _state.transitions[transition].goTo.join() 
+        ? _state.transitions[transition].goTo.sort().join() 
         : null;
     }
     return _state;
@@ -123,31 +147,32 @@ export class AppComponent implements OnInit{
     deltaList.push(copyAfdState.name);
     for (let transition of copyAfdState.transitions){
       if (Array.isArray(transition.goTo)){
-        if (!this.isStateInDeltaList(deltaList,transition.goTo.join()) && transition.goTo.join() != ""){
-          deltaList.push(transition.goTo.join());
+        if (!this.isStateInDeltaList(deltaList,transition.goTo.sort().join()) && transition.goTo.join() != ""){
+          deltaList.push(transition.goTo.sort().join());
         }
       }
     }
   }
-  private createAFDTransitions (afnStates:Array<AutomataState>,alphabet:Array<string>){
-    let afdStates = [this.afdFirstState(afnStates[0])] // we use the first state of the automata as initial input
+  private createAFDTransitions (afnStates:Array<AutomataState>,alphabet:Array<string>,afnInitialStates:Array<string>){
+    let afdStates = [] // we use the first state of the automata as initial input
     let deltaList = []; // delta list of states
-    this.buildInitialDeltaList(afnStates[0],deltaList);
-    // loop over afnStates
-      // loop over state transitions
-        // check if transition is already in deltaList
-          // if YES => Jump to next state
-          // if NO  =>  - Add to deltaList
-          //            - Join the transition to add to the state name
-          //            - 
-    // console.log("Delta List before: ",deltaList);
-
-    for (let i = 1; i < deltaList.length;i++){
+    let initialDeltaList = 0;
+   // check if there's more than one initial state on the AFN
+    if(afnInitialStates.length > 1){
+      deltaList.push(afnInitialStates.sort().join());
+    }else{
+      // for one initial state:
+      afdStates.push(this.afdFirstState(afnStates[0],afnStates[0].name));
+      this.buildInitialDeltaList(afnStates[0],deltaList);
+      initialDeltaList = 1;
+    }
+    
+    for (let i = initialDeltaList; i < deltaList.length;i++){
       // we have to mount the object's transitions
       let newState    = {name:deltaList[i],transitions:[]};
-      for (let item of alphabet){
+      for (let item of alphabet.sort()){
         let goTo      = [];
-        for (let state of deltaList[i].split(",")){
+        for (let state of deltaList[i].split(",").sort()){
           let afnGoTo = this.getStateGoTo(afnStates,state,item)
           // console.log("afnGoTo: ",afnGoTo);
           if(afnGoTo != null){ 
@@ -157,12 +182,12 @@ export class AppComponent implements OnInit{
           };
           // console.log("getStateGoTo: ",this.getStateGoTo(afnStates,state,item));
         }
-        // console.log("GoTo.join(): ",goTo.join());
-        if(!this.isStateInDeltaList(deltaList,goTo.join()) && goTo.join() != ""){ 
-          deltaList.push(goTo.join()) 
+
+        if(!this.isStateInDeltaList(deltaList,goTo.sort().join()) && goTo.sort().join() != ""){ 
+          deltaList.push(goTo.sort().join()) 
         }
         // if goTo.join() is "" we should push 'null' instead
-        const checkGoTo = goTo.join() == "" ? null : goTo.join();
+        const checkGoTo = goTo.sort().join() == "" ? null : goTo.sort().join();
         newState.transitions.push({consume:item,goTo:checkGoTo});
         // console.log("NewState: ",newState);
       }
@@ -185,12 +210,19 @@ export class AppComponent implements OnInit{
     .debounceTime(500)
     .subscribe((value)=>{
       this.afnLines = this.afnStructure(value,'\n');
-    this.afnStates = this.getStates(this.afnLines);
-    console.log("Alphabet: ",this.getAlphabet(this.afnLines));
-    console.log("AFN Initial: ",this.getInitialStates(this.afnLines));
-    console.log("AFN Final: ",this.getFinalStates(this.afnLines));
-    console.log("AFN States: ",this.afnStates);
-    console.log("AFD States: ",this.createAFDTransitions(this.afnStates,this.getAlphabet(this.afnLines)));
+      this.afnStates = this.getAFNStates(this.afnLines);
+      let afnInitial = this.getAFNInitialStates(this.afnLines);
+      let afnFinal = this.getAFNFinalStates(this.afnLines);
+      let afdInitial = this.getAFDInitialState(afnInitial);
+      let afdStates = this.createAFDTransitions(this.afnStates,this.getAFNAlphabet(this.afnLines),afnInitial);
+      console.log("Alphabet: ",this.getAFNAlphabet(this.afnLines));
+      console.log("AFN Initial: ",afnInitial);
+      console.log("AFN Final: ",afnFinal);
+      console.log("AFN States: ",this.afnStates);
+      
+      console.log("AFD Initial State: ",afdInitial);
+      console.log("AFD Final States: ",this.getAFDFinalState(afdStates,afnFinal))
+      console.log("AFD States: ",afdStates);
     })
   }
   useThis(content:string){
