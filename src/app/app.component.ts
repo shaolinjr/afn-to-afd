@@ -103,6 +103,8 @@ export class AppComponent implements OnInit{
     return null; // if not found
   }
   // AFD PROPERTIES
+  public AFDOutput = "";
+
   private getAFDFinalState(afdStates:Array<AutomataState>,afnFinalStates){
     //loop through afdStates, split in ',', loop through 
     let isFinal = false;
@@ -197,6 +199,27 @@ export class AppComponent implements OnInit{
     // console.log("Delta List After: ",deltaList);
     return afdStates;
   }
+
+  private createAFDOutput(afdStates:Array<AutomataState>,alphabet:Array<string>,initialStates:Array<string>,finalStates:Array<string>){
+    let output = "";
+    // alphabet
+    output+=`AB: ${alphabet.join().replace(","," ")}\n`;
+    // initial states
+    output += `i: ${initialStates}\n`;
+    // final states
+    output += `f: `;
+    finalStates.forEach((state)=>{
+      output += `${state} `;
+    })
+    output+='\n';
+    for (let state of afdStates){
+      for (let transition of state.transitions){
+        output+= `${state.name} ${transition.consume} ${transition.goTo == null?'':transition.goTo}`;
+        output+="\n";
+      }
+    }
+    return output;
+  }
   // private createAFDInitialState ()
   // private createAFDFinalState(afnFinalStates)
 
@@ -211,18 +234,24 @@ export class AppComponent implements OnInit{
     .subscribe((value)=>{
       this.afnLines = this.afnStructure(value,'\n');
       this.afnStates = this.getAFNStates(this.afnLines);
-      let afnInitial = this.getAFNInitialStates(this.afnLines);
-      let afnFinal = this.getAFNFinalStates(this.afnLines);
-      let afdInitial = this.getAFDInitialState(afnInitial);
-      let afdStates = this.createAFDTransitions(this.afnStates,this.getAFNAlphabet(this.afnLines),afnInitial);
-      console.log("Alphabet: ",this.getAFNAlphabet(this.afnLines));
-      console.log("AFN Initial: ",afnInitial);
-      console.log("AFN Final: ",afnFinal);
+      let alphabet = this.getAFNAlphabet(this.afnLines);
+      let afnInitials = this.getAFNInitialStates(this.afnLines);
+      let afnFinals = this.getAFNFinalStates(this.afnLines);
+      let afdInitials = this.getAFDInitialState(afnInitials);
+      let afdStates = this.createAFDTransitions(this.afnStates,this.getAFNAlphabet(this.afnLines),afnInitials);
+      let afdFinals = this.getAFDFinalState(afdStates,afnFinals);
+      this.AFDOutput = this.createAFDOutput(afdStates,alphabet,afdInitials,afdFinals);
+      console.log("Alphabet: ",alphabet);
+      console.log("AFN Initial: ",afnInitials);
+      console.log("AFN Final: ",afnFinals);
       console.log("AFN States: ",this.afnStates);
       
-      console.log("AFD Initial State: ",afdInitial);
-      console.log("AFD Final States: ",this.getAFDFinalState(afdStates,afnFinal))
+      console.log("AFD Initial State: ",afdInitials);
+      console.log("AFD Final States: ",afdFinals)
       console.log("AFD States: ",afdStates);
+      console.log("Output: ");
+      
+      console.log(this.AFDOutput);
     })
   }
   useThis(content:string){
