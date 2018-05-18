@@ -4,7 +4,7 @@
     .headline-section{}
     .exemplos-section{
       .exemplo{
-        // min-height: 400px;
+        min-height: 350px;
         padding: 10px;
         resize: none;
         line-height: 1.5rem;
@@ -12,6 +12,9 @@
     }
     section{
       padding-top:60px;
+    }
+    .afn{
+      min-height: 100px;
     }
   }
   

@@ -25,7 +25,7 @@
         <div class="col-12 col-md-4" *ngFor="let exemplo of exemplos">
           <div class="form-group">
             <label [for]="exemplo.name">{{exemplo.title}}</label>
-            <textarea autosize class="form-control exemplo" [name]="exemplo.name" readonly>{{exemplo.content}}</textarea>
+            <textarea class="form-control exemplo" [name]="exemplo.name" readonly>{{exemplo.content}}</textarea>
             <br>
             <button class="btn btn-primary btn-block" (click)="useThis(exemplo.content)">Usar esse</button>
           </div>
@@ -43,19 +43,21 @@
       </div>
       <div class="row">
         <div class="col-12 col-md-6">
-          <form [formGroup]="afnForm">
+          <form [formGroup]="AutomataForm">
             <div class="form-group">
-              <label for="afd">Transições AFN</label>
+              <label for="afn">Transições AFN</label>
               <textarea autosize class="form-control afd" name="afn" formControlName="afn"></textarea>
             </div>
-            <!-- Form Value: {{afnForm.value | json}} -->
           </form>
+          <button class="btn btn-primary btn-block" (click)="translateAutomata(AutomataForm.value.afn)" [disabled]="AutomataForm.value.afn == ''">Traduzir AFN</button>
         </div>
-        <div class="col-12 col-md-6">
-          <div class="form-group">
-            <label for="afd">Transições AFD</label>
-            <textarea autosize class="form-control afn" name="afd">{{AFDOutput}}</textarea>
-          </div>
+        <div class="col-12 col-md-6" *ngIf="AFDOutput.length > 0">
+          <form [formGroup]="afdForm">
+            <div class="form-group">
+              <label for="afd">Transições AFD</label>
+              <textarea autosize class="form-control afn" name="afd" readonly formControlName="afd"></textarea>
+            </div>
+          </form>
         </div>
       </div>
     </div>

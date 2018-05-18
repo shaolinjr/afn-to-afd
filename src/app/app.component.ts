@@ -33,7 +33,6 @@ export class AppComponent implements OnInit{
   private afnLines;
   private afnStates;
   private afnAlphabet;
-  public afnForm:FormGroup;
   private afnStructure(afn:string,separator:'\n'){
     let lines:Array<string> = afn.split(separator)
     .map((line)=>{return line.trim()})
@@ -220,42 +219,71 @@ export class AppComponent implements OnInit{
     }
     return output;
   }
-  // private createAFDInitialState ()
-  // private createAFDFinalState(afnFinalStates)
+  
+  private translateAutomata(afnText:string){
+    this.afnLines = this.afnStructure(afnText,'\n');
+    this.afnStates = this.getAFNStates(this.afnLines);
+    let alphabet = this.getAFNAlphabet(this.afnLines);
+    let afnInitials = this.getAFNInitialStates(this.afnLines);
+    let afnFinals = this.getAFNFinalStates(this.afnLines);
+    let afdInitials = this.getAFDInitialState(afnInitials);
+    let afdStates = this.createAFDTransitions(this.afnStates,this.getAFNAlphabet(this.afnLines),afnInitials);
+    let afdFinals = this.getAFDFinalState(afdStates,afnFinals);
+    this.AFDOutput = this.createAFDOutput(afdStates,alphabet,afdInitials,afdFinals);
+    console.log("Alphabet: ",alphabet);
+    console.log("AFN Initial: ",afnInitials);
+    console.log("AFN Final: ",afnFinals);
+    console.log("AFN States: ",this.afnStates);
+    
+    console.log("AFD Initial State: ",afdInitials);
+    console.log("AFD Final States: ",afdFinals)
+    console.log("AFD States: ",afdStates);
+    console.log("Output: ");  
+    console.log(this.AFDOutput);
 
+    this.afdForm.controls.afd.setValue(this.AFDOutput);
+  }
+
+  public AutomataForm:FormGroup;
+  public afdForm:FormGroup;
   constructor(private fb:FormBuilder){
-    this.afnForm = this.fb.group({afn:''});
+    this.AutomataForm = this.fb.group({afn:''});
+    this.afdForm = this.fb.group({afd:''});
   }  
   ngOnInit(){
     
     
-    this.afnForm.controls.afn.valueChanges
-    .debounceTime(500)
-    .subscribe((value)=>{
-      this.afnLines = this.afnStructure(value,'\n');
-      this.afnStates = this.getAFNStates(this.afnLines);
-      let alphabet = this.getAFNAlphabet(this.afnLines);
-      let afnInitials = this.getAFNInitialStates(this.afnLines);
-      let afnFinals = this.getAFNFinalStates(this.afnLines);
-      let afdInitials = this.getAFDInitialState(afnInitials);
-      let afdStates = this.createAFDTransitions(this.afnStates,this.getAFNAlphabet(this.afnLines),afnInitials);
-      let afdFinals = this.getAFDFinalState(afdStates,afnFinals);
-      this.AFDOutput = this.createAFDOutput(afdStates,alphabet,afdInitials,afdFinals);
-      console.log("Alphabet: ",alphabet);
-      console.log("AFN Initial: ",afnInitials);
-      console.log("AFN Final: ",afnFinals);
-      console.log("AFN States: ",this.afnStates);
+    // this.afnForm.controls.afn.valueChanges
+    // .debounceTime(500)
+    // .subscribe((value)=>{
+    //   this.afnLines = this.afnStructure(value,'\n');
+    //   this.afnStates = this.getAFNStates(this.afnLines);
+    //   let alphabet = this.getAFNAlphabet(this.afnLines);
+    //   let afnInitials = this.getAFNInitialStates(this.afnLines);
+    //   let afnFinals = this.getAFNFinalStates(this.afnLines);
+    //   let afdInitials = this.getAFDInitialState(afnInitials);
+    //   let afdStates = this.createAFDTransitions(this.afnStates,this.getAFNAlphabet(this.afnLines),afnInitials);
+    //   let afdFinals = this.getAFDFinalState(afdStates,afnFinals);
+    //   this.AFDOutput = this.createAFDOutput(afdStates,alphabet,afdInitials,afdFinals);
+    //   console.log("Alphabet: ",alphabet);
+    //   console.log("AFN Initial: ",afnInitials);
+    //   console.log("AFN Final: ",afnFinals);
+    //   console.log("AFN States: ",this.afnStates);
       
-      console.log("AFD Initial State: ",afdInitials);
-      console.log("AFD Final States: ",afdFinals)
-      console.log("AFD States: ",afdStates);
-      console.log("Output: ");
+    //   console.log("AFD Initial State: ",afdInitials);
+    //   console.log("AFD Final States: ",afdFinals)
+    //   console.log("AFD States: ",afdStates);
+    //   console.log("Output: ");
       
-      console.log(this.AFDOutput);
-    })
+    //   console.log(this.AFDOutput);
+    // })
   }
   useThis(content:string){
     // make afn receive content
-    this.afnForm.controls.afn.setValue(content);
+    this.AutomataForm.controls.afn.setValue(content);
+    if (this.AFDOutput.length > 0){
+      this.afdForm.controls.afd.setValue("");
+      this.AFDOutput = "";
+    }
   }
 }
