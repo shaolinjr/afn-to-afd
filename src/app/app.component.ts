@@ -15,7 +15,8 @@ export class AppComponent implements OnInit{
     {
       title:'Exemplo 1 AFN',
       name:'exemplo1',
-      content:`AB: 0 1\ni: x\nf: x1010\nx 0 x\nx 1 x x1\nx1 0 x10\nx1 1\nx10 0\nx10 1 x101\nx101 0 x1010\n x101 1\nx1010 0\nx1010 1`
+      // content:`AB: 0 1\ni: x\nf: x1010\nx 0 x\nx 1 x x1\nx1 0 x10\nx1 1\nx10 0\nx10 1 x101\nx101 0 x1010\n x101 1\nx1010 0\nx1010 1`
+      content: `AB: a b c\ni: 1 2 3\nf: 3\n1 a 2\n1 b\n1 c\n2 a 2\n2 b\n2 c 2 3\n3 a 3 2\n3 b\n3 c`
     },
     {
       title:'Exemplo 2 AFN',
@@ -154,6 +155,13 @@ export class AppComponent implements OnInit{
       }
     }
   }
+  private removeDuplicateStates(states:Array<string>){
+    let join = states.sort().join();
+    let set:any = new Set(join.split(",")).values();
+    // we had to use Array.from(set) here because of TypeScript approach to spread operators 
+    // for now it only accepts iterators from an Array
+    return  [...Array.from(set)].join();
+  }
   private createAFDTransitions (afnStates:Array<AutomataState>,alphabet:Array<string>,afnInitialStates:Array<string>){
     let afdStates = [] // we use the first state of the automata as initial input
     let deltaList = []; // delta list of states
@@ -171,24 +179,30 @@ export class AppComponent implements OnInit{
     for (let i = initialDeltaList; i < deltaList.length;i++){
       // we have to mount the object's transitions
       let newState    = {name:deltaList[i],transitions:[]};
+      
       for (let item of alphabet.sort()){
         let goTo      = [];
+        let newGoTo = ""; // this goTo is to make sure we don't have this situation: 2,2,3
         for (let state of deltaList[i].split(",").sort()){
           let afnGoTo = this.getStateGoTo(afnStates,state,item)
           // console.log("afnGoTo: ",afnGoTo);
           if(afnGoTo != null){ 
-            // we can't add duplicate states
+            // we can't add duplicate states in the same states array
             let filter = goTo.filter((v)=>{return v == afnGoTo});
             if (filter.length == 0){goTo.push(afnGoTo)};
           };
           // console.log("getStateGoTo: ",this.getStateGoTo(afnStates,state,item));
         }
-
-        if(!this.isStateInDeltaList(deltaList,goTo.sort().join()) && goTo.sort().join() != ""){ 
-          deltaList.push(goTo.sort().join()) 
+        // we need to prevent states that are duplicate in different transitions like: ["2","2,3"]
+        // we join => 2,2,3, then split again => new Set(["2","2","3"])
+        if (goTo.sort().join() != ""){
+          newGoTo = this.removeDuplicateStates(goTo);
+        }
+        if(!this.isStateInDeltaList(deltaList,newGoTo) && goTo.sort().join() != ""){ 
+          deltaList.push(newGoTo)
         }
         // if goTo.join() is "" we should push 'null' instead
-        const checkGoTo = goTo.sort().join() == "" ? null : goTo.sort().join();
+        const checkGoTo = newGoTo == "" ? null : newGoTo;
         newState.transitions.push({consume:item,goTo:checkGoTo});
         // console.log("NewState: ",newState);
       }
