@@ -27,6 +27,11 @@ export class AppComponent implements OnInit{
       title:'Exemplo 3 AFN',
       name:'exemplo3',
       content:`AB: 0 1\ni: A B\nf: D\nA 0 D C\nA 1 \nB 0 \nB 1 D\nC 0 \nC 1 B A\nD 0 B\nD 1`
+    },
+    {
+      title:'Exemplo 4 AFN',
+      name:'exemplo4',
+      content:`AB: a b c d\ni: 1 3\nf: 2\n1 a 1\n1 b 1 2\n1 c \n1 d \n2 a \n2 b \n2 c 2\n2 d \n3 a 3\n3 b \n3 c \n3 d 2 3`
     }
   ]
 
@@ -87,7 +92,7 @@ export class AppComponent implements OnInit{
     return null;
   }
   private getStateGoTo(afnStates:Array<AutomataState>,stateName:string,alphabetItem:string){
-    
+
     for (let state of afnStates){
       if (state.name == stateName){
         let filter = state.transitions
@@ -106,7 +111,7 @@ export class AppComponent implements OnInit{
   public AFDOutput = "";
 
   private getAFDFinalState(afdStates:Array<AutomataState>,afnFinalStates){
-    //loop through afdStates, split in ',', loop through 
+    //loop through afdStates, split in ',', loop through
     let isFinal = false;
     let finalStates = [];
     for (let afdState of afdStates){
@@ -138,8 +143,8 @@ export class AppComponent implements OnInit{
     // _state.name = Array.isArray(_state.name) ? _state.join() : _state.name;
     _state.name = afdInitialState;
     for (let transition in _state.transitions){
-      _state.transitions[transition].goTo = Array.isArray(_state.transitions[transition].goTo)  
-        ? _state.transitions[transition].goTo.sort().join() 
+      _state.transitions[transition].goTo = Array.isArray(_state.transitions[transition].goTo)
+        ? _state.transitions[transition].goTo.sort().join()
         : null;
     }
     return _state;
@@ -158,7 +163,7 @@ export class AppComponent implements OnInit{
   private removeDuplicateStates(states:Array<string>){
     let join = states.sort().join();
     let set:any = new Set(join.split(",")).values();
-    // we had to use Array.from(set) here because of TypeScript approach to spread operators 
+    // we had to use Array.from(set) here because of TypeScript approach to spread operators
     // for now it only accepts iterators from an Array
     return  [...Array.from(set)].join();
   }
@@ -175,18 +180,18 @@ export class AppComponent implements OnInit{
       this.buildInitialDeltaList(afnStates[0],deltaList);
       initialDeltaList = 1;
     }
-    
+
     for (let i = initialDeltaList; i < deltaList.length;i++){
       // we have to mount the object's transitions
       let newState    = {name:deltaList[i],transitions:[]};
-      
+
       for (let item of alphabet.sort()){
         let goTo      = [];
         let newGoTo = ""; // this goTo is to make sure we don't have this situation: 2,2,3
         for (let state of deltaList[i].split(",").sort()){
           let afnGoTo = this.getStateGoTo(afnStates,state,item)
           // console.log("afnGoTo: ",afnGoTo);
-          if(afnGoTo != null){ 
+          if(afnGoTo != null){
             // we can't add duplicate states in the same states array
             let filter = goTo.filter((v)=>{return v == afnGoTo});
             if (filter.length == 0){goTo.push(afnGoTo)};
@@ -198,7 +203,7 @@ export class AppComponent implements OnInit{
         if (goTo.sort().join() != ""){
           newGoTo = this.removeDuplicateStates(goTo);
         }
-        if(!this.isStateInDeltaList(deltaList,newGoTo) && goTo.sort().join() != ""){ 
+        if(!this.isStateInDeltaList(deltaList,newGoTo) && goTo.sort().join() != ""){
           deltaList.push(newGoTo)
         }
         // if goTo.join() is "" we should push 'null' instead
@@ -233,7 +238,7 @@ export class AppComponent implements OnInit{
     }
     return output;
   }
-  
+
   private translateAutomata(afnText:string){
     this.afnLines = this.afnStructure(afnText,'\n');
     this.afnStates = this.getAFNStates(this.afnLines);
@@ -248,11 +253,11 @@ export class AppComponent implements OnInit{
     console.log("AFN Initial: ",afnInitials);
     console.log("AFN Final: ",afnFinals);
     console.log("AFN States: ",this.afnStates);
-    
+
     console.log("AFD Initial State: ",afdInitials);
     console.log("AFD Final States: ",afdFinals)
     console.log("AFD States: ",afdStates);
-    console.log("Output: ");  
+    console.log("Output: ");
     console.log(this.AFDOutput);
 
     this.afdForm.controls.afd.setValue(this.AFDOutput);
@@ -263,10 +268,10 @@ export class AppComponent implements OnInit{
   constructor(private fb:FormBuilder){
     this.AutomataForm = this.fb.group({afn:''});
     this.afdForm = this.fb.group({afd:''});
-  }  
+  }
   ngOnInit(){
-    
-    
+
+
     // this.afnForm.controls.afn.valueChanges
     // .debounceTime(500)
     // .subscribe((value)=>{
@@ -283,12 +288,12 @@ export class AppComponent implements OnInit{
     //   console.log("AFN Initial: ",afnInitials);
     //   console.log("AFN Final: ",afnFinals);
     //   console.log("AFN States: ",this.afnStates);
-      
+
     //   console.log("AFD Initial State: ",afdInitials);
     //   console.log("AFD Final States: ",afdFinals)
     //   console.log("AFD States: ",afdStates);
     //   console.log("Output: ");
-      
+
     //   console.log(this.AFDOutput);
     // })
   }
