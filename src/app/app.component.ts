@@ -13,9 +13,13 @@ export class AppComponent implements OnInit{
 
   public exemplos = [
     {
+      title:'Exemplo do Trabalho',
+      name:'exemplo-trabalho',
+      content:`AB: 0 1\ni: x\nf: x1010\nx 0 x\nx 1 x x1\nx1 0 x10\nx1 1\nx10 0\nx10 1 x101\nx101 0 x1010\n x101 1\nx1010 0\nx1010 1`
+    },
+    {
       title:'Exemplo 1 AFN',
       name:'exemplo1',
-      // content:`AB: 0 1\ni: x\nf: x1010\nx 0 x\nx 1 x x1\nx1 0 x10\nx1 1\nx10 0\nx10 1 x101\nx101 0 x1010\n x101 1\nx1010 0\nx1010 1`
       content: `AB: a b c\ni: 1 2 3\nf: 3\n1 a 2\n1 b\n1 c\n2 a 2\n2 b\n2 c 2 3\n3 a 3 2\n3 b\n3 c`
     },
     {
@@ -33,6 +37,8 @@ export class AppComponent implements OnInit{
       name:'exemplo4',
       content:`AB: a b c d\ni: 1 3\nf: 2\n1 a 1\n1 b 1 2\n1 c \n1 d \n2 a \n2 b \n2 c 2\n2 d \n3 a 3\n3 b \n3 c \n3 d 2 3`
     }
+    
+
   ]
 
   // AFN PROPERTIES
